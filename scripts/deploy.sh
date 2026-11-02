@@ -102,3 +102,4 @@ echo -e "${GREEN}===============================================================
 echo -e "${GREEN}   Deployment Succeeded in ${DURATION} seconds!                     ${NC}"
 echo -e "${GREEN}   Commit: ${COMMIT_HASH} | Author: ${COMMIT_AUTHOR}                ${NC}"
 echo -e "${GREEN}====================================================================${NC}"
+

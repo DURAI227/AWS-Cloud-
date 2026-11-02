@@ -48,7 +48,7 @@ class Config:
     BUILD_URL = os.environ.get('BUILD_URL', '')
 
     # Git metadata
-    GITHUB_REPO_URL = os.environ.get('GITHUB_REPO_URL', 'https://github.com/example/aws-cloud-deployment.git')
+    GITHUB_REPO_URL = os.environ.get('GITHUB_REPO_URL', 'https://github.com/DURAI227/AWS-Cloud-.git')
     GIT_BRANCH = os.environ.get('GIT_BRANCH', 'main')
 
     # Paths
@@ -320,3 +320,4 @@ def get_system_metrics():
         pass
 
     return metrics
+

@@ -82,3 +82,4 @@ fi
 echo -e "${GREEN}====================================================================${NC}"
 echo -e "${GREEN}   Application Backup Workflow Completed Successfully!              ${NC}"
 echo -e "${GREEN}====================================================================${NC}"
+

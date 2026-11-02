@@ -268,3 +268,4 @@ function showToast(message) {
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3500);
 }
+
