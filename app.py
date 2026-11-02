@@ -315,13 +315,35 @@ def api_backups():
 
 
 # ---------------------------------------------------------------------------
+# Favicon Route
+# ---------------------------------------------------------------------------
+@app.route('/favicon.ico')
+def favicon():
+    return ('', 204)
+
+
+# ---------------------------------------------------------------------------
 # Error Handlers
 # ---------------------------------------------------------------------------
 @app.errorhandler(404)
 def not_found_error(error):
     if request.path.startswith('/api/') or request.path == '/health':
         return jsonify({"error": "Resource Not Found", "status_code": 404, "path": request.path}), 404
-    return render_template('index.html', error_message="Page Not Found (404)"), 404
+    deployments = load_deployments()
+    return render_template(
+        'index.html',
+        app_name=Config.APP_NAME,
+        app_version=Config.APP_VERSION,
+        environment=Config.FLASK_ENV,
+        ec2=get_ec2_metadata(),
+        jenkins=get_jenkins_status(),
+        git=get_git_info(),
+        s3=get_s3_status(),
+        deployments=deployments[:5],
+        latest_deployment=deployments[0] if deployments else None,
+        metrics=get_system_metrics(),
+        error_message="Resource Not Found (404)"
+    ), 404
 
 
 @app.errorhandler(500)
@@ -329,7 +351,21 @@ def internal_error(error):
     logger.error(f"Internal Server Error: {error}")
     if request.path.startswith('/api/') or request.path == '/health':
         return jsonify({"error": "Internal Server Error", "status_code": 500}), 500
-    return render_template('index.html', error_message="Internal Server Error (500)"), 500
+    deployments = load_deployments()
+    return render_template(
+        'index.html',
+        app_name=Config.APP_NAME,
+        app_version=Config.APP_VERSION,
+        environment=Config.FLASK_ENV,
+        ec2=get_ec2_metadata(),
+        jenkins=get_jenkins_status(),
+        git=get_git_info(),
+        s3=get_s3_status(),
+        deployments=deployments[:5],
+        latest_deployment=deployments[0] if deployments else None,
+        metrics=get_system_metrics(),
+        error_message="Internal Server Error (500)"
+    ), 500
 
 
 # ---------------------------------------------------------------------------
