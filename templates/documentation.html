@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation - {{ app_name }}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon"><i class="fab fa-aws"></i></div>
+            <div class="brand-text">
+                <h5>AWS CI/CD</h5>
+                <span>DevOps Portal</span>
+            </div>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-category">Core Navigation</div>
+            <a href="/" class="sidebar-link">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="/deployments" class="sidebar-link">
+                <i class="fas fa-rocket"></i> Deployments
+            </a>
+            <a href="/infrastructure" class="sidebar-link">
+                <i class="fas fa-server"></i> Infrastructure
+            </a>
+            <a href="/documentation" class="sidebar-link active">
+                <i class="fas fa-book"></i> Documentation
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <div class="system-status-indicator">
+                <div class="status-dot"></div>
+                <div>
+                    <div class="fw-semibold">Ops Runbook Active</div>
+                    <small class="text-secondary">v1.0.0 Specifications</small>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="top-navbar">
+            <div class="page-title">
+                <h4>Project Documentation & Architecture Runbook</h4>
+                <p>Engineering Specifications &bull; AWS EC2 &bull; Jenkins Pipeline &bull; Deployment Guide</p>
+            </div>
+            <div class="navbar-actions">
+                <a href="/" class="btn btn-cyan-outline btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i> Dashboard
+                </a>
+            </div>
+        </header>
+
+        <main class="content-body">
+            <!-- Navigation quick jumps -->
+            <div class="devops-card mb-4">
+                <div class="card-body p-3">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <strong class="text-dark small me-2"><i class="fas fa-compass me-1"></i> Quick Jump:</strong>
+                        <a href="#architecture" class="btn btn-sm btn-outline-secondary">Architecture</a>
+                        <a href="#quickstart" class="btn btn-sm btn-outline-secondary">Local Setup</a>
+                        <a href="#aws-ec2" class="btn btn-sm btn-outline-secondary">AWS EC2</a>
+                        <a href="#aws-s3" class="btn btn-sm btn-outline-secondary">AWS S3 & IAM</a>
+                        <a href="#jenkins-pipeline" class="btn btn-sm btn-outline-secondary">Jenkins CI/CD</a>
+                        <a href="#api-reference" class="btn btn-sm btn-outline-secondary">REST APIs</a>
+                        <a href="#troubleshooting" class="btn btn-sm btn-outline-secondary">Troubleshooting</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 1. System Architecture -->
+            <div class="devops-card mb-4" id="architecture">
+                <div class="card-header">
+                    <h5><i class="fas fa-sitemap text-primary"></i> 1. System Architecture Overview</h5>
+                </div>
+                <div class="card-body">
+                    <p>This deployment implements a resilient, enterprise-standard DevOps architecture utilizing:</p>
+                    <ul>
+                        <li><strong>Application Layer:</strong> Python 3.10+ Flask application with WSGI worker pooling provided by <code>Gunicorn</code>.</li>
+                        <li><strong>Web Server & Reverse Proxy:</strong> <code>Nginx</code> listening on Port 80/443, proxying to Gunicorn UNIX socket or <code>127.0.0.1:5000</code> with Gzip compression and security headers.</li>
+                        <li><strong>Process Supervisor:</strong> Linux <code>systemd</code> daemon (<code>flaskapp.service</code>) ensuring automated restart on failure and auto-start on EC2 boot.</li>
+                        <li><strong>Cloud Infrastructure:</strong> AWS EC2 (Ubuntu 24.04 LTS), AWS S3 for automated pre-deployment tarball snapshots, IAM Instance Profiles for secret-less credential rotation.</li>
+                        <li><strong>CI/CD Engine:</strong> Jenkins Declarative Pipeline with 6 automated stages (Checkout &rarr; Build &rarr; Test &rarr; Backup &rarr; Deploy &rarr; Verify).</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 2. Local Installation & Development -->
+            <div class="devops-card mb-4" id="quickstart">
+                <div class="card-header">
+                    <h5><i class="fas fa-laptop-code text-success"></i> 2. Local Installation & Verification</h5>
+                </div>
+                <div class="card-body">
+                    <p>To run the application locally on any workstation:</p>
+                    <pre class="code-box"><code># 1. Clone repository
+git clone {{ github_repo }}
+cd aws-cloud-deployment
+
+# 2. Create virtual environment
+python -m venv venv
+
+# 3. Activate virtual environment
+# On Linux / macOS:
+source venv/bin/activate
+# On Windows PowerShell:
+.\venv\Scripts\Activate.ps1
+
+# 4. Install dependencies
+pip install -r requirements.txt
+
+# 5. Run automated test suite
+pytest -v tests/test_app.py
+
+# 6. Start development server
+python app.py
+# Server runs on http://127.0.0.1:5000</code></pre>
+                </div>
+            </div>
+
+            <!-- 3. AWS EC2 Setup -->
+            <div class="devops-card mb-4" id="aws-ec2">
+                <div class="card-header">
+                    <h5><i class="fab fa-aws text-warning"></i> 3. AWS EC2 Setup (Ubuntu 24.04 LTS)</h5>
+                </div>
+                <div class="card-body">
+                    <p>Follow these steps to prepare your EC2 instance:</p>
+                    <ol>
+                        <li>Launch an EC2 instance:
+                            <ul>
+                                <li>AMI: <strong>Ubuntu Server 24.04 LTS</strong> (64-bit x86)</li>
+                                <li>Instance Type: <code>t3.micro</code> (Free Tier eligible) or <code>t3.small</code></li>
+                                <li>Key Pair: Create or select an SSH key pair (e.g. <code>ec2-key.pem</code>)</li>
+                                <li>Security Group: Inbound rules:
+                                    <ul>
+                                        <li>SSH (Port 22): restricted to your IP / Jenkins IP</li>
+                                        <li>HTTP (Port 80): <code>0.0.0.0/0</code></li>
+                                        <li>HTTPS (Port 443): <code>0.0.0.0/0</code></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>Connect to the server and execute the automated setup script:
+                            <pre class="code-box"><code># SSH into EC2 instance
+ssh -i /path/to/ec2-key.pem ubuntu@&lt;YOUR_EC2_PUBLIC_IP&gt;
+
+# Clone repo and execute setup script
+git clone {{ github_repo }} /var/www/flaskapp
+cd /var/www/flaskapp
+chmod +x scripts/*.sh
+
+# Run automated EC2 configuration script
+sudo ./scripts/setup_ec2.sh</code></pre>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- 4. AWS S3 & IAM Configuration -->
+            <div class="devops-card mb-4" id="aws-s3">
+                <div class="card-header">
+                    <h5><i class="fas fa-database text-info"></i> 4. AWS S3 Bucket & IAM Least-Privilege Policy</h5>
+                </div>
+                <div class="card-body">
+                    <p>Create a secure, private S3 bucket and attach an IAM Instance Profile to EC2:</p>
+                    <pre class="code-box"><code># 1. Create S3 Bucket via AWS CLI
+aws s3 mb s3://my-flaskapp-deploy-backups-bucket --region us-east-1
+
+# 2. Block all public access
+aws s3api put-public-access-block \
+    --bucket my-flaskapp-deploy-backups-bucket \
+    --public-access-block-configuration "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
+
+# 3. Enable AES-256 Server-Side Encryption
+aws s3api put-bucket-encryption \
+    --bucket my-flaskapp-deploy-backups-bucket \
+    --server-side-encryption-configuration '{"Rules": [{"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}]}'</code></pre>
+
+                    <h6 class="fw-bold mt-3">Least-Privilege IAM Policy for EC2 Instance Profile:</h6>
+                    <pre class="code-box"><code>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowS3BackupOperations",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::my-flaskapp-deploy-backups-bucket",
+        "arn:aws:s3:::my-flaskapp-deploy-backups-bucket/*"
+      ]
+    }
+  ]
+}</code></pre>
+                </div>
+            </div>
+
+            <!-- 5. Jenkins CI/CD Pipeline Configuration -->
+            <div class="devops-card mb-4" id="jenkins-pipeline">
+                <div class="card-header">
+                    <h5><i class="fab fa-jenkins text-danger"></i> 5. Jenkins CI/CD Pipeline Implementation</h5>
+                </div>
+                <div class="card-body">
+                    <p>The included <code>Jenkinsfile</code> defines a complete declarative pipeline. To configure Jenkins:</p>
+                    <ol>
+                        <li>Install required Jenkins plugins:
+                            <ul>
+                                <li><strong>Pipeline</strong></li>
+                                <li><strong>Git plugin</strong></li>
+                                <li><strong>SSH Agent plugin</strong></li>
+                                <li><strong>AWS Steps / Credentials plugin</strong></li>
+                            </ul>
+                        </li>
+                        <li>Add Jenkins Credentials (under <em>Manage Jenkins &rarr; Credentials</em>):
+                            <ul>
+                                <li><code>ec2-ssh-key</code>: SSH Private Key with passphrase (for user <code>ubuntu</code>).</li>
+                                <li><code>aws-credentials</code>: AWS Access Key ID & Secret Access Key (if IAM role is not on Jenkins node).</li>
+                            </ul>
+                        </li>
+                        <li>Create a new <strong>Pipeline</strong> job pointing to your GitHub repository and set script path to <code>Jenkinsfile</code>.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- 6. REST API Reference -->
+            <div class="devops-card mb-4" id="api-reference">
+                <div class="card-header">
+                    <h5><i class="fas fa-plug text-primary"></i> 6. REST API Specifications</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-bordered table-custom mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Method</th>
+                                <th>Endpoint</th>
+                                <th>Description</th>
+                                <th>Sample Response</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge bg-success">GET</span></td>
+                                <td><code>/health</code></td>
+                                <td>Application health check endpoint used by ALB and Jenkins Stage 6.</td>
+                                <td><code>{"status": "healthy", "uptime": "2h 15m", "python_version": "3.10.12"}</code></td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-success">GET</span></td>
+                                <td><code>/api/status</code></td>
+                                <td>Complete telemetry payload (EC2 metadata, Jenkins, Git, S3).</td>
+                                <td><code>{"status": "healthy", "ec2": {...}, "jenkins": {...}}</code></td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-success">GET</span></td>
+                                <td><code>/api/deployments</code></td>
+                                <td>List historical deployment records and audit metadata.</td>
+                                <td><code>{"count": 3, "deployments": [{...}]}</code></td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-primary">POST</span></td>
+                                <td><code>/api/deployments</code></td>
+                                <td>Record a new deployment event (invoked by deploy script).</td>
+                                <td><code>{"status": "success", "record": {...}}</code></td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-success">GET</span></td>
+                                <td><code>/api/system-info</code></td>
+                                <td>Hardware resource telemetry (CPU, Memory, Disk, Uptime).</td>
+                                <td><code>{"system_info": {"cpu_percent": 12.5, "memory_percent": 38.2}}</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 7. Troubleshooting Runbook -->
+            <div class="devops-card" id="troubleshooting">
+                <div class="card-header">
+                    <h5><i class="fas fa-wrench text-secondary"></i> 7. DevOps Troubleshooting Runbook</h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="troubleshootingAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tb1">
+                                    Q: Gunicorn service fails to start or exits with error
+                                </button>
+                            </h2>
+                            <div id="tb1" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    Check logs with: <code>sudo journalctl -u flaskapp.service -n 50 --no-pager</code>. Verify virtual environment path in <code>/etc/systemd/system/flaskapp.service</code> and check file permissions for <code>/var/www/flaskapp</code>.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tb2">
+                                    Q: Nginx returns 502 Bad Gateway
+                                </button>
+                            </h2>
+                            <div id="tb2" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    Verify Gunicorn is actively listening on port 5000: <code>curl -I http://127.0.0.1:5000/health</code>. Ensure Nginx upstream matches <code>http://127.0.0.1:5000</code>. Inspect Nginx error log: <code>sudo tail -n 50 /var/log/nginx/error.log</code>.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tb3">
+                                    Q: Jenkins Stage 4 S3 Backup upload fails
+                                </button>
+                            </h2>
+                            <div id="tb3" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    Ensure the S3 bucket exists, <code>S3_BUCKET_NAME</code> environment variable is set, and the IAM role or AWS credentials attached to the Jenkins node have <code>s3:PutObject</code> permission on the bucket.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="portal-footer">
+            <div><strong>AWS Cloud Deployment Portal</strong> &bull; Documentation & Architecture</div>
+            <div>DevOps Engineering Standard</div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

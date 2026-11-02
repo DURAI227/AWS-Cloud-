@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_name }} - DevOps Dashboard</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <i class="fab fa-aws"></i>
+            </div>
+            <div class="brand-text">
+                <h5>AWS CI/CD</h5>
+                <span>DevOps Portal</span>
+            </div>
+        </div>
+
+        <div class="sidebar-nav">
+            <div class="nav-category">Core Navigation</div>
+            <a href="/" class="sidebar-link active">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="/deployments" class="sidebar-link">
+                <i class="fas fa-rocket"></i> Deployments
+            </a>
+            <a href="/infrastructure" class="sidebar-link">
+                <i class="fas fa-server"></i> Infrastructure
+            </a>
+            <a href="/documentation" class="sidebar-link">
+                <i class="fas fa-book"></i> Documentation
+            </a>
+
+            <div class="nav-category mt-3">Cloud Integrations</div>
+            <a href="/infrastructure#ec2" class="sidebar-link">
+                <i class="fas fa-cubes"></i> AWS EC2 Status
+            </a>
+            <a href="/infrastructure#s3" class="sidebar-link">
+                <i class="fas fa-archive"></i> S3 Backups
+            </a>
+            <a href="/deployments#jenkins" class="sidebar-link">
+                <i class="fab fa-jenkins"></i> Jenkins Pipeline
+            </a>
+            <a href="https://github.com" target="_blank" class="sidebar-link">
+                <i class="fab fa-github"></i> GitHub Source
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="system-status-indicator">
+                <div class="status-dot"></div>
+                <div>
+                    <div class="fw-semibold">Flask Service Active</div>
+                    <small class="text-secondary">v{{ app_version }} | {{ environment }}</small>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+        <!-- Top Navbar -->
+        <header class="top-navbar">
+            <div class="page-title">
+                <h4>DevOps Deployment & Telemetry Dashboard</h4>
+                <p>Automated CI/CD Pipeline &bull; AWS EC2 &bull; S3 &bull; Jenkins &bull; Nginx</p>
+            </div>
+            <div class="navbar-actions">
+                <button id="refreshMetricsBtn" class="btn btn-cyan-outline btn-sm">
+                    <i class="fas fa-sync-alt me-1"></i> Refresh Telemetry
+                </button>
+                <button id="testHealthBtn" class="btn btn-primary-custom btn-sm">
+                    <i class="fas fa-heartbeat me-1"></i> Run Live Health Check
+                </button>
+            </div>
+        </header>
+
+        <!-- Body Content -->
+        <main class="content-body">
+
+            <!-- Flash Error if any -->
+            {% if error_message %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i> {{ error_message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endif %}
+
+            <!-- Top Row: 4 Metric Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card blue">
+                        <div class="stat-content">
+                            <h6>Application State</h6>
+                            <div class="stat-val text-primary">HEALTHY</div>
+                            <div class="stat-sub">Uptime: <span id="metricUptime">{{ metrics.uptime_formatted }}</span></div>
+                        </div>
+                        <div class="stat-icon blue-bg">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card cyan">
+                        <div class="stat-content">
+                            <h6>AWS EC2 Host</h6>
+                            {% if ec2.is_ec2 %}
+                            <div class="stat-val text-info">{{ ec2.instance_type }}</div>
+                            <div class="stat-sub">{{ ec2.instance_id }} ({{ ec2.availability_zone }})</div>
+                            {% else %}
+                            <div class="stat-val text-secondary" style="font-size: 1.15rem;">LOCAL / HYBRID</div>
+                            <div class="stat-sub">EC2 IMDSv2 unconfigured</div>
+                            {% endif %}
+                        </div>
+                        <div class="stat-icon cyan-bg">
+                            <i class="fas fa-server"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card green">
+                        <div class="stat-content">
+                            <h6>CI/CD Pipeline</h6>
+                            {% if jenkins.is_live %}
+                            <div class="stat-val text-success">BUILD #{{ jenkins.build_number }}</div>
+                            <div class="stat-sub">Pipeline Verified &bull; Stage 6 Passed</div>
+                            {% else %}
+                            <div class="stat-val text-dark" style="font-size: 1.15rem;">STANDBY</div>
+                            <div class="stat-sub">Ready for webhook trigger</div>
+                            {% endif %}
+                        </div>
+                        <div class="stat-icon green-bg">
+                            <i class="fab fa-jenkins"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card purple">
+                        <div class="stat-content">
+                            <h6>S3 Backups Archive</h6>
+                            {% if s3.is_connected %}
+                            <div class="stat-val text-purple">{{ s3.backup_count }} Snapshots</div>
+                            <div class="stat-sub">{{ s3.bucket_name }}</div>
+                            {% else %}
+                            <div class="stat-val text-muted" style="font-size: 1.15rem;">UNCONFIGURED</div>
+                            <div class="stat-sub">Set S3_BUCKET_NAME</div>
+                            {% endif %}
+                        </div>
+                        <div class="stat-icon purple-bg">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pipeline Visualizer Track -->
+            <div class="devops-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-code-branch"></i> Jenkins Automated CI/CD Pipeline Workflow</h5>
+                    <span class="badge bg-primary">Declarative Pipeline</span>
+                </div>
+                <div class="card-body">
+                    <div class="pipeline-track">
+                        <div class="stage-step completed">
+                            <div class="stage-circle"><i class="fas fa-download"></i></div>
+                            <div class="stage-name">1. Checkout</div>
+                            <div class="stage-desc">Git Clone Repository</div>
+                        </div>
+                        <div class="stage-step completed">
+                            <div class="stage-circle"><i class="fas fa-cogs"></i></div>
+                            <div class="stage-name">2. Build</div>
+                            <div class="stage-desc">Venv & Dependencies</div>
+                        </div>
+                        <div class="stage-step completed">
+                            <div class="stage-circle"><i class="fas fa-vial"></i></div>
+                            <div class="stage-name">3. Test</div>
+                            <div class="stage-desc">Pytest & App Sanity</div>
+                        </div>
+                        <div class="stage-step completed">
+                            <div class="stage-circle"><i class="fas fa-file-archive"></i></div>
+                            <div class="stage-name">4. Backup</div>
+                            <div class="stage-desc">Snapshot to S3</div>
+                        </div>
+                        <div class="stage-step completed">
+                            <div class="stage-circle"><i class="fas fa-rocket"></i></div>
+                            <div class="stage-name">5. Deploy</div>
+                            <div class="stage-desc">Gunicorn Reload on EC2</div>
+                        </div>
+                        <div class="stage-step completed">
+                            <div class="stage-circle"><i class="fas fa-check-double"></i></div>
+                            <div class="stage-name">6. Verify</div>
+                            <div class="stage-desc">Health Check 200 OK</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two-Column Grid: Infrastructure & Git Status + Charts -->
+            <div class="row g-4 mb-4">
+                <!-- Left Column: EC2 & S3 Integration Cards -->
+                <div class="col-lg-7">
+                    <!-- AWS EC2 Info Card -->
+                    <div class="devops-card mb-4">
+                        <div class="card-header">
+                            <h5><i class="fab fa-aws"></i> AWS EC2 Server Runtime Status</h5>
+                            {% if ec2.is_ec2 %}
+                            <span class="badge-live"><i class="fas fa-circle text-success small"></i> LIVE AWS EC2</span>
+                            {% else %}
+                            <span class="badge-unconfigured"><i class="fas fa-info-circle"></i> LOCAL HOST (EC2 Standby)</span>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless table-custom mb-0">
+                                <tbody>
+                                    <tr>
+                                        <th style="width: 32%;">Detection Status:</th>
+                                        <td>
+                                            {% if ec2.is_ec2 %}
+                                            <span class="text-success fw-bold"><i class="fas fa-check-circle"></i> {{ ec2.status }}</span>
+                                            {% else %}
+                                            <span class="text-secondary"><i class="fas fa-circle-notch"></i> {{ ec2.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Instance ID:</th>
+                                        <td>
+                                            {% if ec2.instance_id %}
+                                            <span class="badge-mono">{{ ec2.instance_id }}</span>
+                                            {% else %}
+                                            <span class="text-muted">N/A (Deploying on EC2 will populate via IMDSv2)</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Instance Type:</th>
+                                        <td>
+                                            {% if ec2.instance_type %}
+                                            <span class="badge bg-info text-dark">{{ ec2.instance_type }}</span>
+                                            {% else %}
+                                            <span class="text-muted">t3.micro / t3.small (Target AWS tier)</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Region & Availability Zone:</th>
+                                        <td><code>{{ ec2.region }}</code> &bull; {{ ec2.availability_zone or 'Pending EC2 Launch' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Private IP:</th>
+                                        <td><code>{{ ec2.private_ip }}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Operating System:</th>
+                                        <td>Ubuntu 24.04 LTS (Target) &bull; Current Host: {{ metrics.os }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Security Groups:</th>
+                                        <td>
+                                            <span class="badge bg-secondary">SSH (22)</span>
+                                            <span class="badge bg-secondary">HTTP (80)</span>
+                                            <span class="badge bg-secondary">HTTPS (443)</span>
+                                            <span class="badge bg-primary">Flask/Gunicorn (5000)</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- GitHub & Jenkins Information -->
+                    <div class="devops-card">
+                        <div class="card-header">
+                            <h5><i class="fab fa-github"></i> Git & CI/CD Pipeline Context</h5>
+                            <span class="badge bg-dark"><i class="fas fa-code-commit"></i> {{ git.commit_hash }}</span>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless table-custom mb-0">
+                                <tbody>
+                                    <tr>
+                                        <th style="width: 32%;">Repository:</th>
+                                        <td><a href="{{ git.repo_url }}" target="_blank" class="text-decoration-none fw-semibold">{{ git.repo_url }}</a></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Active Branch:</th>
+                                        <td><span class="badge bg-primary"><i class="fas fa-code-branch me-1"></i> {{ git.branch }}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Latest Commit:</th>
+                                        <td><code>{{ git.commit_hash }}</code> &bull; <span class="text-muted">{{ git.commit_message }}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Commit Author:</th>
+                                        <td><i class="fas fa-user-circle text-secondary me-1"></i> {{ git.author }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Jenkins Server:</th>
+                                        <td>
+                                            {% if jenkins.is_live %}
+                                            <span class="text-success fw-bold"><i class="fas fa-check"></i> Connected</span> (<a href="{{ jenkins.build_url }}" target="_blank">Build #{{ jenkins.build_number }}</a>)
+                                            {% else %}
+                                            <span class="text-secondary"><i class="fas fa-plug"></i> {{ jenkins.status }}</span> &bull; <code>{{ jenkins.jenkins_server_url }}</code>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Live Resource Telemetry & Charts -->
+                <div class="col-lg-5">
+                    <!-- Resource Gauge Chart -->
+                    <div class="devops-card mb-4">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-pie"></i> Real-Time Host Resource Telemetry</h5>
+                            <span class="badge bg-info text-dark">Live Metrics</span>
+                        </div>
+                        <div class="card-body">
+                            <div style="height: 220px; position: relative;">
+                                <canvas id="resourceChart"></canvas>
+                            </div>
+
+                            <div class="row g-2 mt-3 text-center">
+                                <div class="col-4 border-end">
+                                    <small class="text-muted d-block">CPU</small>
+                                    <strong id="metricCpu" class="text-primary">{{ metrics.cpu_percent }}%</strong>
+                                </div>
+                                <div class="col-4 border-end">
+                                    <small class="text-muted d-block">Memory</small>
+                                    <strong id="metricMem" class="text-info">{{ metrics.memory_percent }}%</strong>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted d-block">Disk Usage</small>
+                                    <strong id="metricDisk" class="text-danger">{{ metrics.disk_percent }}%</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AWS S3 Backups Card -->
+                    <div class="devops-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-database"></i> AWS S3 Backup Status</h5>
+                            {% if s3.is_connected %}
+                            <span class="badge-live"><i class="fas fa-check"></i> CONNECTED</span>
+                            {% else %}
+                            <span class="badge-unconfigured"><i class="fas fa-info-circle"></i> {{ s3.status }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <p class="small text-muted mb-2">Automated backup archive created prior to each deployment step and stored in Amazon S3.</p>
+                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                                <span class="fw-bold">Target Bucket:</span>
+                                <code>{{ s3.bucket_name }}</code>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                                <span class="fw-bold">AWS Region:</span>
+                                <span>{{ s3.region }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                                <span class="fw-bold">Backups Count:</span>
+                                <span class="badge bg-primary">{{ s3.backup_count }} stored</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">Last Sync:</span>
+                                <span class="small text-muted">{{ s3.latest_backup }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row: Recent Deployment History Table -->
+            <div class="devops-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-history"></i> Recent Deployment History</h5>
+                    <a href="/deployments" class="btn btn-outline-primary btn-sm">View Full History</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-custom mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Deployment ID</th>
+                                    <th>Timestamp (UTC)</th>
+                                    <th>Commit</th>
+                                    <th>Author</th>
+                                    <th>Branch</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dep in deployments %}
+                                <tr>
+                                    <td><strong>{{ dep.id }}</strong></td>
+                                    <td>{{ dep.timestamp }}</td>
+                                    <td><code>{{ dep.commit_hash }}</code></td>
+                                    <td>{{ dep.author }}</td>
+                                    <td><span class="badge bg-secondary">{{ dep.branch }}</span></td>
+                                    <td>{{ dep.duration }}</td>
+                                    <td>
+                                        {% if dep.status == 'SUCCESS' %}
+                                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> SUCCESS</span>
+                                        {% else %}
+                                        <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i> FAILED</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="alert('Deployment Artifact: {{ dep.backup_file }}\nDetails: {{ dep.details }}')">
+                                            <i class="fas fa-info-circle"></i> Info
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">No deployment records found. Run a Jenkins build or deployment script to record.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="portal-footer">
+            <div>
+                <strong>AWS Cloud Deployment Architecture</strong> &bull; Python Flask + Nginx + Gunicorn + Jenkins CI/CD
+            </div>
+            <div>
+                <span>Python {{ metrics.python_version }}</span> &bull; 
+                <span>Ubuntu 24.04 Target</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Server metrics context passed to JS -->
+    <script>
+        window.serverMetrics = {{ metrics|tojson }};
+    </script>
+    <!-- Dashboard JS -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

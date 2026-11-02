@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infrastructure - {{ app_name }}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon"><i class="fab fa-aws"></i></div>
+            <div class="brand-text">
+                <h5>AWS CI/CD</h5>
+                <span>DevOps Portal</span>
+            </div>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-category">Core Navigation</div>
+            <a href="/" class="sidebar-link">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="/deployments" class="sidebar-link">
+                <i class="fas fa-rocket"></i> Deployments
+            </a>
+            <a href="/infrastructure" class="sidebar-link active">
+                <i class="fas fa-server"></i> Infrastructure
+            </a>
+            <a href="/documentation" class="sidebar-link">
+                <i class="fas fa-book"></i> Documentation
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <div class="system-status-indicator">
+                <div class="status-dot"></div>
+                <div>
+                    <div class="fw-semibold">Infrastructure Monitored</div>
+                    <small class="text-secondary">AWS EC2 &bull; S3</small>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="top-navbar">
+            <div class="page-title">
+                <h4>AWS Cloud Infrastructure & Server Architecture</h4>
+                <p>EC2 Ubuntu 24.04 LTS &bull; S3 Bucket &bull; Nginx &bull; Gunicorn Systemd</p>
+            </div>
+            <div class="navbar-actions">
+                <a href="/" class="btn btn-cyan-outline btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i> Dashboard
+                </a>
+            </div>
+        </header>
+
+        <main class="content-body">
+            <!-- Architecture Flow Diagram Card -->
+            <div class="devops-card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-network-wired text-primary"></i> Multi-Tier AWS Production Architecture</h5>
+                    <span class="badge bg-primary">Traffic & Deployment Path</span>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center g-3">
+                        <div class="col-md-3">
+                            <div class="p-3 border rounded bg-light">
+                                <i class="fas fa-globe text-primary fa-2x mb-2"></i>
+                                <h6 class="fw-bold mb-1">1. Inbound Traffic</h6>
+                                <p class="small text-muted mb-0">Clients / HTTPS 443 / HTTP 80 via Internet Gateway</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 border rounded bg-light">
+                                <i class="fas fa-shield-alt text-info fa-2x mb-2"></i>
+                                <h6 class="fw-bold mb-1">2. Nginx Web Server</h6>
+                                <p class="small text-muted mb-0">Reverse Proxy, SSL Termination & Security Headers</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 border rounded bg-light">
+                                <i class="fab fa-python text-success fa-2x mb-2"></i>
+                                <h6 class="fw-bold mb-1">3. Gunicorn WSGI</h6>
+                                <p class="small text-muted mb-0">Managed by Linux systemd (`flaskapp.service` on 127.0.0.1:5000)</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 border rounded bg-light">
+                                <i class="fas fa-database text-warning fa-2x mb-2"></i>
+                                <h6 class="fw-bold mb-1">4. AWS S3 Storage</h6>
+                                <p class="small text-muted mb-0">Encrypted private bucket for automated release backups</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row: EC2 Details + S3 Details -->
+            <div class="row g-4 mb-4">
+                <!-- EC2 Card -->
+                <div class="col-lg-6" id="ec2">
+                    <div class="devops-card h-100">
+                        <div class="card-header">
+                            <h5><i class="fab fa-aws text-warning"></i> AWS EC2 Compute Instance</h5>
+                            {% if ec2.is_ec2 %}
+                            <span class="badge-live"><i class="fas fa-circle text-success small"></i> LIVE EC2</span>
+                            {% else %}
+                            <span class="badge-unconfigured"><i class="fas fa-info-circle"></i> LOCAL HOST</span>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-custom table-borderless mb-0">
+                                <tbody>
+                                    <tr>
+                                        <th style="width: 38%;">Status:</th>
+                                        <td><strong>{{ ec2.status }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Target AMI:</th>
+                                        <td>Ubuntu Server 24.04 LTS (Noble Numbat)</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Instance ID:</th>
+                                        <td><span class="badge-mono">{{ ec2.instance_id or 'Not provisioned yet' }}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Instance Type:</th>
+                                        <td><code>{{ ec2.instance_type or 't3.micro (AWS Free Tier eligible)' }}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <th>AWS Region:</th>
+                                        <td><code>{{ ec2.region }}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Availability Zone:</th>
+                                        <td><code>{{ ec2.availability_zone or 'Pending Placement' }}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Private IP:</th>
+                                        <td><code>{{ ec2.private_ip }}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Detection Mechanism:</th>
+                                        <td>{{ ec2.detection_mode }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="mt-3 p-3 bg-light rounded border">
+                                <h6 class="fw-bold text-dark mb-1"><i class="fas fa-shield-alt text-primary me-1"></i> Security Group Configuration:</h6>
+                                <ul class="small text-muted mb-0 ps-3">
+                                    <li><strong>Port 22 (SSH):</strong> Restricted to Jenkins Server IP & Administrator CIDR</li>
+                                    <li><strong>Port 80 (HTTP):</strong> Inbound from <code>0.0.0.0/0</code> (Public Web)</li>
+                                    <li><strong>Port 443 (HTTPS):</strong> Inbound from <code>0.0.0.0/0</code> (SSL/TLS)</li>
+                                    <li><strong>Port 5000 (Internal):</strong> Bound locally to <code>127.0.0.1</code> (No external exposure)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- S3 Bucket Card -->
+                <div class="col-lg-6" id="s3">
+                    <div class="devops-card h-100">
+                        <div class="card-header">
+                            <h5><i class="fas fa-cloud-upload-alt text-info"></i> AWS S3 Storage & Backup Bucket</h5>
+                            {% if s3.is_connected %}
+                            <span class="badge-live"><i class="fas fa-check"></i> S3 CONNECTED</span>
+                            {% else %}
+                            <span class="badge-unconfigured"><i class="fas fa-info-circle"></i> {{ s3.status }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-custom table-borderless mb-0">
+                                <tbody>
+                                    <tr>
+                                        <th style="width: 38%;">Configured Bucket:</th>
+                                        <td><code>{{ s3.bucket_name }}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Bucket Status:</th>
+                                        <td><strong>{{ s3.status }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Region:</th>
+                                        <td><code>{{ s3.region }}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Access Security:</th>
+                                        <td><span class="badge bg-success">Block All Public Access</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Encryption:</th>
+                                        <td><span class="badge bg-dark">SSE-S3 (AES-256)</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Total Backups:</th>
+                                        <td><span class="badge bg-primary">{{ s3.backup_count }} archives</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="mt-3">
+                                <h6 class="fw-bold text-dark mb-2"><i class="fas fa-archive text-secondary me-1"></i> S3 Backup Archives:</h6>
+                                {% if s3.backups %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered small">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Archive Name</th>
+                                                <th>Size (KB)</th>
+                                                <th>Timestamp</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for b in s3.backups %}
+                                            <tr>
+                                                <td><code>{{ b.filename }}</code></td>
+                                                <td>{{ b.size_kb }} KB</td>
+                                                <td>{{ b.last_modified }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-light border small text-muted mb-0">
+                                    <i class="fas fa-info-circle me-1"></i> No remote S3 backups discovered yet. Backups are automatically pushed by Jenkins CI/CD Stage 4 (`scripts/backup.sh`).
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Host System Information Card -->
+            <div class="devops-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-microchip text-danger"></i> Host Hardware & Runtime Telemetry (API: <code>GET /api/system-info</code>)</h5>
+                    <span class="badge bg-secondary font-monospace">{{ metrics.platform }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 text-center bg-light">
+                                <span class="text-muted small d-block">CPU Cores</span>
+                                <h4 class="fw-bold mb-0 text-dark">{{ metrics.cpu_count }}</h4>
+                                <small class="text-primary">{{ metrics.cpu_percent }}% active load</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 text-center bg-light">
+                                <span class="text-muted small d-block">RAM Memory</span>
+                                <h4 class="fw-bold mb-0 text-dark">{{ metrics.memory_used_gb }} / {{ metrics.memory_total_gb }} GB</h4>
+                                <small class="text-info">{{ metrics.memory_percent }}% utilized</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 text-center bg-light">
+                                <span class="text-muted small d-block">Disk Storage</span>
+                                <h4 class="fw-bold mb-0 text-dark">{{ metrics.disk_used_gb }} / {{ metrics.disk_total_gb }} GB</h4>
+                                <small class="text-danger">{{ metrics.disk_percent }}% filled</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 text-center bg-light">
+                                <span class="text-muted small d-block">System Uptime</span>
+                                <h4 class="fw-bold mb-0 text-dark">{{ metrics.uptime_formatted }}</h4>
+                                <small class="text-success">{{ metrics.uptime_seconds }} seconds</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="portal-footer">
+            <div><strong>AWS Cloud Deployment Portal</strong> &bull; Infrastructure Management</div>
+            <div>Ubuntu 24.04 LTS Architecture</div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

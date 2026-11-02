@@ -1,0 +1,74 @@
+[
+  {
+    "id": "DEP-1006",
+    "timestamp": "2026-11-02 13:42:22 UTC",
+    "commit_hash": "unknown",
+    "author": "DevOps Team",
+    "branch": "main",
+    "status": "SUCCESS",
+    "duration": "40s",
+    "environment": "AWS EC2 (production)",
+    "backup_file": "flaskapp-backup-20261102-134222.tar.gz",
+    "details": "Live Smoke Test Verification"
+  },
+  {
+    "id": "DEP-1005",
+    "timestamp": "2026-11-02 13:41:29 UTC",
+    "commit_hash": "c9a72b1",
+    "author": "Jenkins Test Runner",
+    "branch": "feature/jenkins-test",
+    "status": "SUCCESS",
+    "duration": "25s",
+    "environment": "AWS EC2 (production)",
+    "backup_file": "flaskapp-backup-20261102-134129.tar.gz",
+    "details": "Automated pytest validation event"
+  },
+  {
+    "id": "DEP-1004",
+    "timestamp": "2026-11-02 13:40:26 UTC",
+    "commit_hash": "c9a72b1",
+    "author": "Jenkins Test Runner",
+    "branch": "feature/jenkins-test",
+    "status": "SUCCESS",
+    "duration": "25s",
+    "environment": "AWS EC2 (production)",
+    "backup_file": "flaskapp-backup-20261102-134026.tar.gz",
+    "details": "Automated pytest validation event"
+  },
+  {
+    "id": "DEP-1003",
+    "timestamp": "2026-11-02 18:30:15 UTC",
+    "commit_hash": "a8f3b21",
+    "author": "Cloud & DevOps Team",
+    "branch": "main",
+    "status": "SUCCESS",
+    "duration": "38s",
+    "environment": "AWS EC2 Production (Ubuntu 24.04)",
+    "backup_file": "flaskapp-backup-20261102-183000.tar.gz",
+    "details": "Automated deployment via Jenkins CI/CD Pipeline Build #3"
+  },
+  {
+    "id": "DEP-1002",
+    "timestamp": "2026-11-02 16:15:40 UTC",
+    "commit_hash": "e4c7d90",
+    "author": "DevOps Engineer",
+    "branch": "main",
+    "status": "SUCCESS",
+    "duration": "45s",
+    "environment": "AWS EC2 Production (Ubuntu 24.04)",
+    "backup_file": "flaskapp-backup-20261102-161500.tar.gz",
+    "details": "Deployment of Gunicorn systemd & Nginx reverse proxy configuration"
+  },
+  {
+    "id": "DEP-1001",
+    "timestamp": "2026-11-02 14:00:22 UTC",
+    "commit_hash": "b2a1c09",
+    "author": "DevOps Engineer",
+    "branch": "main",
+    "status": "SUCCESS",
+    "duration": "52s",
+    "environment": "AWS EC2 Production (Ubuntu 24.04)",
+    "backup_file": "flaskapp-backup-20261102-140000.tar.gz",
+    "details": "Initial baseline deployment & virtualenv provisioning"
+  }
+]

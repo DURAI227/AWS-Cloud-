@@ -1,0 +1,35 @@
+[Unit]
+Description=Flask Application WSGI Server (Gunicorn)
+After=network.target
+
+[Service]
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/var/www/flaskapp
+Environment="PATH=/var/www/flaskapp/venv/bin:/usr/local/bin:/usr/bin:/bin"
+EnvironmentFile=-/var/www/flaskapp/.env
+ExecStart=/var/www/flaskapp/venv/bin/gunicorn \
+    --workers 3 \
+    --worker-class sync \
+    --bind 127.0.0.1:5000 \
+    --timeout 60 \
+    --keep-alive 5 \
+    --access-logfile /var/log/flaskapp/gunicorn-access.log \
+    --error-logfile /var/log/flaskapp/gunicorn-error.log \
+    --capture-output \
+    --enable-stdio-inheritance \
+    app:app
+
+Restart=always
+RestartSec=5
+KillSignal=SIGQUIT
+Type=notify
+NotifyAccess=all
+
+# Security Sandbox Restrictions
+PrivateTmp=true
+ProtectSystem=full
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
